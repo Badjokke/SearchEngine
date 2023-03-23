@@ -8,6 +8,8 @@ import java.util.logging.Level;
 
 //todo napsat tridu obalujici query request pro automatickou serializaci a pohodlnost
 @RestController
+//todo lepe
+@CrossOrigin(origins = "http://localhost:3000")
 public class SearchController {
     @RequestMapping(method = RequestMethod.GET,value = "/search",produces = "application/json")
     public String searchQuery(@RequestParam Optional<String> query){

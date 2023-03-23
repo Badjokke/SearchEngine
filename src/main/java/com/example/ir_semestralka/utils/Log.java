@@ -20,7 +20,7 @@ public class Log {
         int hour = now.getHour();
         int minute = now.getMinute();
         int second = now.getSecond();
-        logger.log(level,hour+":"+minute+":"+second+":"+year+"."+day+"."+month,message+"\n");
+        logger.log(level,hour+":"+minute+":"+second+":"+year+"."+day+"."+month+" "+message+"\n");
     }
 
 }

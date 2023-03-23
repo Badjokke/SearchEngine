@@ -1,25 +1,19 @@
 import React from 'react';
-import logo from './assets/logo.svg';
-import './assets/App.css';
-
+import MainMenu from "./components/MainMenu";
+import Router from "./pages/Router";
+import MenuNavbar from "./components/MenuNavbar";
 function App() {
+    /**
+     * hlavni struktura aplikace
+     * komponenta <Router/> bude nahrazovana jednotlivymi komponenta podle aktualni cesty v url
+     */
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <div className="App">
+        <h1 className={"title center-title"}>Hogo fogo vyhledávací systém</h1>
+          <MainMenu menuTitle={"Navigační menu"}/>
+          <MenuNavbar/>
+          <Router/>
+      </div>
   );
 }
 
