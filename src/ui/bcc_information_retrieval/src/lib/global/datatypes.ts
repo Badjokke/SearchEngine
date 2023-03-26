@@ -14,10 +14,19 @@ export interface RouterRefs {
 }
 
 export interface InputType {
-    type:string;
+    type: string;
     id: string;
-    placeholder:string;
-    onInput:any;
-    value:string;
-    className:string;
+    placeholder: string;
+    onInput: any;
+    value: string;
+    className: string;
+}
+export interface ArticleListItems{
+    articles: ArticleListItem[]
+}
+export interface ArticleListItem{
+        author: string,
+        title: string,
+        news_category: string,
+        content: string
 }
