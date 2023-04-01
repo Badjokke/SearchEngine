@@ -7,6 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class IrSemestralkaApplication {
 
     public static void main(String[] args) {
+
+
         SpringApplication.run(IrSemestralkaApplication.class, args);
     }
 

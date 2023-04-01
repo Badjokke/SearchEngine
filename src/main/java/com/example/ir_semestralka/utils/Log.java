@@ -11,7 +11,13 @@ public class Log {
         logger.addHandler(new ConsoleHandler());
     }
 
-
+    /**
+     *
+     * Method logs message with level and timestamp into terminal
+     * ie INFO "hello, info"
+     * @param level Level - log level
+     * @param message String - message to logged
+     */
     public void log(Level level, String message){
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();

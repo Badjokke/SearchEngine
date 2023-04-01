@@ -1,17 +1,21 @@
 package com.example.ir_semestralka.service;
 
-import com.example.ir_semestralka.utils.Global;
-import org.json.JSONObject;
-import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.logging.Level;
+import com.example.ir_semestralka.Constants;
+import com.example.ir_semestralka.crawler.Crawler;
+import org.springframework.stereotype.Service;
 
 @Service
 public class CrawlerBBC implements ICrawler{
     @Override
-    public JSONObject downloadPage(String url, Map<String, String> xpaths) {
-        Global.logger.log(Level.INFO,"downloading page "+ url);
-        return null;
+    public boolean crawlRootPages() {
+        Crawler crawler = new Crawler(4,4, Constants.POLITENESS_INTERVAL);
+        crawler.crawlSeedPage(false);
+        return true;
+    }
+
+    @Override
+    public boolean crawlPage(String url) {
+        return true;
     }
 }
