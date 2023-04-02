@@ -1,6 +1,6 @@
 package com.example.ir_semestralka.controller;
 
-import com.example.ir_semestralka.utils.Global;
+import com.example.ir_semestralka.utils.Log;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -14,7 +14,7 @@ import java.util.logging.Level;
 public class SearchController {
     @RequestMapping(method = RequestMethod.GET,value = "/search",produces = "application/json")
     public String searchQuery(@RequestParam Optional<String> query){
-        Global.logger.log(Level.INFO,"Query search recieved");
+        Log.log(Level.INFO,"Query search recieved");
         try{
             Thread.sleep(5000);
         }

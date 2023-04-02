@@ -6,7 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 //wrapper class for java logger
 public class Log {
-    private Logger logger = Logger.getLogger(Log.class.getName());
+    private static Logger logger = Logger.getLogger(Log.class.getName());
     public Log(){
         logger.addHandler(new ConsoleHandler());
     }
@@ -18,7 +18,7 @@ public class Log {
      * @param level Level - log level
      * @param message String - message to logged
      */
-    public void log(Level level, String message){
+    public static void log(Level level, String message){
         LocalDateTime now = LocalDateTime.now();
         int year = now.getYear();
         int month = now.getMonthValue();

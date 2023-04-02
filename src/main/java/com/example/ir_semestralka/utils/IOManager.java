@@ -17,19 +17,60 @@ public class IOManager {
      * @param rewrite if this parameter is set to true, files will be rewritten even if they exist
      */
     public static boolean createStorage(boolean rewrite){
-        File rootStorage = new File(Constants.storageRoot);
-        boolean fileCreated = true;
-        if(!rootStorage.exists() || rewrite) {
-            Global.logger.log(Level.INFO,"Creating database: "+Constants.storageRoot+" on filesystem.");
-            fileCreated = rootStorage.mkdir();
-            if(!fileCreated){
-                Global.logger.log(Level.SEVERE,"Failed to create database directory "+Constants.storageRoot);
-                Global.logger.log(Level.INFO,"Killing the server.");
-            }
+        boolean fileCreated = false;
+
+        try{
+            fileCreated = createFile(rewrite,Constants.storageRoot);
+
+        }
+        catch (IOException exception){
+            Log.log(Level.SEVERE,"Failed to create  storage directory "+Constants.crawlerFileStorage);
+            exception.printStackTrace();
+            return false;
 
         }
         return fileCreated;
     }
+
+    /**
+     *
+     * @param rewrite if this flag is set to true, file will be rewritten
+     * @return true if file was created
+     */
+    public static boolean createDocumentStorage(boolean rewrite){
+        boolean fileCreated = false;
+        try{
+            fileCreated = createFile(rewrite,Constants.crawlerFileStorage);
+        }
+        catch (IOException exception){
+            Log.log(Level.SEVERE,"Failed to create crawler storage file "+Constants.crawlerFileStorage);
+            exception.printStackTrace();
+            return false;
+        }
+        return fileCreated;
+    }
+
+    public static boolean writeJSONfile(String content, String path) throws IOException {
+        //createFile(true,path);
+        FileWriter file = new FileWriter(path);
+        file.write(content);
+        file.flush();
+        file.close();
+        return true;
+    }
+
+    private static boolean createFile(boolean rewrite, String path) throws IOException{
+        File rootStorage = new File(path);
+        boolean fileCreated = true;
+        if(!rootStorage.exists() || rewrite) {
+            //Global.logger.log(Level.INFO,"Creating file: "+path+" on filesystem.");
+            fileCreated = rootStorage.mkdir();
+            if(!fileCreated){
+                Log.log(Level.SEVERE,"Failed to create file "+ path);
+            }
+        }
+        return fileCreated;
+        }
 
     public static JSONObject readJSONfile(String path){
         BufferedReader br = null;
@@ -39,16 +80,16 @@ public class IOManager {
             jsonObject = (JSONObject) jsonParser.parse(br);
 
         } catch (FileNotFoundException e) {
-            Global.logger.log(Level.WARNING,"Failed to load json file from path: "+ path);
+            Log.log(Level.WARNING,"Failed to load json file from path: "+ path);
             e.printStackTrace();
             return null;
         } catch (IOException e) {
             e.printStackTrace();
-            Global.logger.log(Level.WARNING,"Failed to load json file from path: "+ path);
+            Log.log(Level.WARNING,"Failed to load json file from path: "+ path);
             return null;
         } catch (ParseException e) {
             e.printStackTrace();
-            Global.logger.log(Level.WARNING,"Failed to parse json file from path: "+ path);
+            Log.log(Level.WARNING,"Failed to parse json file from path: "+ path);
             return null;
         }
         return (JSONObject) jsonObject.get("crawler");
