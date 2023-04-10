@@ -1,6 +1,6 @@
 package com.example.ir_semestralka.utils;
 
-import com.example.ir_semestralka.Constants;
+import com.example.ir_semestralka.global.Constants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

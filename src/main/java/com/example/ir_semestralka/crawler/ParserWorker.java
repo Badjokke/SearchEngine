@@ -1,7 +1,8 @@
 package com.example.ir_semestralka.crawler;
 
-import com.example.ir_semestralka.Constants;
+import com.example.ir_semestralka.global.Constants;
 import com.example.ir_semestralka.utils.IOManager;
+import com.example.ir_semestralka.utils.JSONBuilder;
 import com.example.ir_semestralka.utils.Log;
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
 import edu.uci.ics.crawler4j.crawler.Page;
@@ -15,14 +16,13 @@ import edu.uci.ics.crawler4j.parser.ParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
 import edu.uci.ics.crawler4j.parser.Parser;
 import org.apache.http.HttpStatus;
-import org.apache.tomcat.util.bcel.Const;
-import org.json.simple.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import us.codecraft.xsoup.Xsoup;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -37,17 +37,16 @@ public class ParserWorker extends Thread {
     private int politenessInterval;
     private final PageFetcher pageFetcher;
     private final Parser parser;
-
+    private final JSONBuilder jsonBuilder;
     public ParserWorker(Crawler manager, List<String> xpathExpressions, int politenessInterval){
         this.manager = manager;
         this.xpathExpressions = xpathExpressions;
         this.politenessInterval = politenessInterval;
-
         //default crawler lib config
         CrawlConfig config = new CrawlConfig();
         this.pageFetcher = new PageFetcher(config);
         this.parser = new Parser(config);
-
+        this.jsonBuilder = new JSONBuilder();
         config.setMaxDepthOfCrawling(0);
         config.setResumableCrawling(false);
     }
@@ -72,11 +71,18 @@ public class ParserWorker extends Thread {
             }
         }
     }
+
+
+
+
     //TODO prohnat stazena data preprocessorem textu
     private void processArticle(List<List<String>> parsedData) {
             List<String> titles = parsedData.get(0);
             List<String> authors = parsedData.get(1);
             List<String> content = parsedData.get(2);
+
+
+
             List<String> relatedArticles = parsedData.get(3);
             for(String url : relatedArticles)
                 this.manager.addUrlToNestedQueue(url);
@@ -98,18 +104,16 @@ public class ParserWorker extends Thread {
 
 
     private void createBBCJSONFile(List<String> titles,List<String> authors,List<String> content){
-        JSONObject json = new JSONObject();
         String title = buildStringFromList(titles);
         String author = buildStringFromList(authors);
         String text = buildStringFromList(content);
-
+        HashMap<String,Object> json = new HashMap<>();
         json.put("title",title);
         json.put("author",author);
-        json.put("news_category","general");
         json.put("content",text);
 
 
-        String jsonString = json.toJSONString();
+        String jsonString = this.jsonBuilder.buildJSON(json);
         try{
             IOManager.writeJSONfile(jsonString, Constants.crawlerFileStorage+"/article"+manager.getArticleNumber()+".json");
         }

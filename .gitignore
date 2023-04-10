@@ -26,6 +26,7 @@ node_modules
 /nbdist/
 /.nb-gradle/
 build/
+storage
 !**/src/main/**/build/
 !**/src/test/**/build/
 

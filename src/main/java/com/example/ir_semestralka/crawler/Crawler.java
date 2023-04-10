@@ -27,12 +27,14 @@ public class Crawler {
     private String subCategoryPage;
     private Iterator<String> iterator;
     private int articleNumber;
+    private final Object waitCondition;
 
     public Crawler(int parserWorkerPool){
         this.parserWorkerWorkers = new ParserWorker[parserWorkerPool];
         this.urls = new HashSet<>();
         this.nestedUrls = new HashSet<>();
         articleNumber = 1;
+        this.waitCondition = new Object();
     }
 
     /**
@@ -59,22 +61,23 @@ public class Crawler {
     public synchronized int getArticleNumber(){
         return this.articleNumber++;
     }
+
+
     /**
      * initialization of pools and starting the threads
      */
     private void run() {
         fetchAllUrls();
-        //init pool
-
+        //init pool and run the threads
 
         for (int i = 0; i < crawlingDepth; i++) {
             this.nestedUrls = new HashSet<>();
             iterator = this.urls.iterator();
-            for (int j = 0; j < this.parserWorkerWorkers.length; j++) {
+            for(int j = 0; j < this.parserWorkerWorkers.length; j++){
                 this.parserWorkerWorkers[j] = new ParserWorker(this, xPaths, politenessInterval);
-                this.parserWorkerWorkers[j].start();
+                parserWorkerWorkers[j].start();
             }
-
+            //wakeUpWorkers();
             for (int j = 0; j < this.parserWorkerWorkers.length; j++) {
                 try{
                     this.parserWorkerWorkers[j].join();
@@ -84,6 +87,11 @@ public class Crawler {
                 }
             }
             this.urls = this.nestedUrls;
+        }
+    }
+    private void wakeUpWorkers(){
+        synchronized (this.waitCondition){
+            this.waitCondition.notifyAll();
         }
     }
 
@@ -105,10 +113,25 @@ public class Crawler {
             url = rootPage + url;
         this.nestedUrls.add(url);
     }
+    private void blockWorker(){
+        synchronized (waitCondition){
+            try{
+                wait();
+            }
+            catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
 
+    }
 
     //give url to worker
     public synchronized String getUrl(){
+        //data structure is not yet initialized but worker is trying to access it block him
+        /*if(this.iterator == null){
+            System.out.println("Vlakno waiti");
+            blockWorker();
+        }*/
         if(iterator.hasNext())
             return iterator.next();
         return null;

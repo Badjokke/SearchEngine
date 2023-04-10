@@ -10,12 +10,8 @@ public class CrawlerBBC implements ICrawler{
     public boolean crawlRootPages() {
         Crawler crawler = new Crawler(10);
         //start crawler thread so the server can still serve clients
-        (new Thread() {
-            public void run() {
-                crawler.config();
-                crawler.crawlSeedPage();
-            }
-        }).start();
+        crawler.config();
+        crawler.crawlSeedPage();
 
         return true;
     }

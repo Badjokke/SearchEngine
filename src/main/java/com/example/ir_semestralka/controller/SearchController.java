@@ -1,9 +1,10 @@
 package com.example.ir_semestralka.controller;
 
+import com.example.ir_semestralka.utils.JSONBuilder;
 import com.example.ir_semestralka.utils.Log;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 
 //todo napsat tridu obalujici query request pro automatickou serializaci a pohodlnost
@@ -21,6 +22,7 @@ public class SearchController {
         catch(InterruptedException exception){
             System.out.println("kdo me vzbudil??");
         }
+
 
         return "{\"articles\":["+
                 "{" +

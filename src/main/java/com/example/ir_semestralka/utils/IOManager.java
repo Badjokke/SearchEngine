@@ -1,6 +1,6 @@
 package com.example.ir_semestralka.utils;
 
-import com.example.ir_semestralka.Constants;
+import com.example.ir_semestralka.global.Constants;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -97,7 +97,21 @@ public class IOManager {
     }
 
 
-
-
-
+    public static String[] loadFileContent(String path, String delimiter) {
+        File file = new File(path);
+        if(!file.exists())return null;
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+        try{
+            br = new BufferedReader(new FileReader(file));
+            String line = null;
+            while((line = br.readLine())!=null)
+                sb.append(line);
+        }
+        catch (IOException exception){
+            Log.log(Level.WARNING,"File not found at: "+path);
+        }
+        String content = sb.toString();
+        return content.split(delimiter);
+    }
 }

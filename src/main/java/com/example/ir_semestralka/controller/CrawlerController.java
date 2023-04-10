@@ -17,6 +17,10 @@ public class CrawlerController {
     public String scrapeNewBBCArticles(){
         Log.log(Level.INFO,"Crawler request recieved");
         crawler.crawlRootPages();
+
+
+
+
         return "{\"key\":\"jsem crawler a budu crawlit web\"}";
 
     }
