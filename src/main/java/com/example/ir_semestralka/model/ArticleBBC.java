@@ -1,6 +1,6 @@
 package com.example.ir_semestralka.model;
 
-public class ArticleBBC{
+public class ArticleBBC implements Article{
     private String title, author, content;
     private static int id = 0;
 

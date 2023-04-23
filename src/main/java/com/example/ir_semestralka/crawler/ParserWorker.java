@@ -33,8 +33,8 @@ import java.util.logging.Level;
  */
 public class ParserWorker extends Thread {
     private List<String> xpathExpressions;
-    private Crawler manager;
-    private int politenessInterval;
+    private final Crawler manager;
+    private final int politenessInterval;
     private final PageFetcher pageFetcher;
     private final Parser parser;
     private final JSONBuilder jsonBuilder;
@@ -73,9 +73,6 @@ public class ParserWorker extends Thread {
     }
 
 
-
-
-    //TODO prohnat stazena data preprocessorem textu
     private void processArticle(List<List<String>> parsedData) {
             List<String> titles = parsedData.get(0);
             List<String> authors = parsedData.get(1);
@@ -91,7 +88,6 @@ public class ParserWorker extends Thread {
 
 
     }
-    //todo move to utils
     private String buildStringFromList(List<String> l){
         String result = "";
         StringBuilder sb = new StringBuilder();
@@ -144,14 +140,8 @@ public class ParserWorker extends Thread {
 
             }
 
-        } catch (PageBiggerThanMaxSizeException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        catch (NotAllowedContentException | ParseException e) {
+        } catch (PageBiggerThanMaxSizeException | IOException | InterruptedException | NotAllowedContentException |
+                 ParseException e) {
             e.printStackTrace();
         }
 

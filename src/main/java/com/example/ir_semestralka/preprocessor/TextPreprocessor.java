@@ -23,7 +23,7 @@ public class TextPreprocessor {
 
 
     private void loadVocabulary(){
-        String[] vocabulary = IOManager.loadFileContent(Constants.VOCABULARY_FILE_PATH,",");
+        String[] vocabulary = IOManager.loadFileContent(Constants.STOP_WORDS_FILE_PATH,"\n");
 
         if(vocabulary == null){
             this.vocabulary = new HashSet<>();
@@ -33,21 +33,22 @@ public class TextPreprocessor {
     }
 
 
-    public String[] getTokens(String text){
+    public List<String> getTokens(String text){
         return this.preprocessText(text);
     }
 
-    private String[] preprocessText(String text){
+    private List<String> preprocessText(String text){
         if(text == null)return null;
         String[] words = text.split("\\s+");
+        List<String> preprocessedText = new ArrayList<>();
         for(int i = 0; i < words.length; i++){
             String word = words[i];
-            word = word.toLowerCase(Locale.ROOT).replaceAll("(^\\w)|(^[\\d]$)","");
+            word = word.toLowerCase(Locale.ROOT).replaceAll("(^[\\d]+$)","");
             if(this.vocabulary.contains(word))
                 continue;
-            words[i] = this.stemmer.stem(word);
+            preprocessedText.add(this.stemmer.stem(word));
         }
-        return words;
+        return preprocessedText;
     }
 
 

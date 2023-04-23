@@ -92,7 +92,7 @@ public class IOManager {
             Log.log(Level.WARNING,"Failed to parse json file from path: "+ path);
             return null;
         }
-        return (JSONObject) jsonObject.get("crawler");
+        return jsonObject;
 
     }
 
@@ -106,7 +106,7 @@ public class IOManager {
             br = new BufferedReader(new FileReader(file));
             String line = null;
             while((line = br.readLine())!=null)
-                sb.append(line);
+                sb.append(line).append(delimiter);
         }
         catch (IOException exception){
             Log.log(Level.WARNING,"File not found at: "+path);

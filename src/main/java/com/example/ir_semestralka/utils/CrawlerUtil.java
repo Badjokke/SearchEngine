@@ -37,6 +37,8 @@ public class CrawlerUtil {
 
     public static void loadConfigFile(){
         config = IOManager.readJSONfile(Constants.CRAWLER_CONFIG_PATH);
+        if(config == null)return;
+        config = (JSONObject) config.get("crawler");
         parseConfigFile();
     }
 
