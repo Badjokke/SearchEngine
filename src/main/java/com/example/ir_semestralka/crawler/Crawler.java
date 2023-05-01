@@ -27,14 +27,12 @@ public class Crawler {
     private String subCategoryPage;
     private Iterator<String> iterator;
     private int articleNumber;
-    private final Object waitCondition;
 
     public Crawler(int parserWorkerPool){
         this.parserWorkerWorkers = new ParserWorker[parserWorkerPool];
         this.urls = new HashSet<>();
         this.nestedUrls = new HashSet<>();
         articleNumber = 1;
-        this.waitCondition = new Object();
     }
 
     /**
@@ -89,11 +87,7 @@ public class Crawler {
             this.urls = this.nestedUrls;
         }
     }
-    private void wakeUpWorkers(){
-        synchronized (this.waitCondition){
-            this.waitCondition.notifyAll();
-        }
-    }
+
 
     /**
      * Adds url to set of urls we will process
@@ -113,17 +107,7 @@ public class Crawler {
             url = rootPage + url;
         this.nestedUrls.add(url);
     }
-    private void blockWorker(){
-        synchronized (waitCondition){
-            try{
-                wait();
-            }
-            catch (InterruptedException e){
-                e.printStackTrace();
-            }
-        }
 
-    }
 
     //give url to worker
     public synchronized String getUrl(){
@@ -136,10 +120,10 @@ public class Crawler {
             return iterator.next();
         return null;
     }
-    //todo maybe move this functionallity to some crawler bootstrapper
+
+
     //necessary evil - first we need to fetch all urls we will later parse
-    //only thread is used for this job
-    //todo move xpaths to configFile
+    //only one thread is used for this job
     private void fetchAllUrls(){
         Log.log(Level.INFO,"Adding seed pages to queue.");
         List<String> xpaths = new ArrayList<>();

@@ -1,5 +1,6 @@
 package com.example.ir_semestralka;
 
+import com.example.ir_semestralka.model.VectorModel;
 import com.example.ir_semestralka.search_engine.SearchEngine;
 import com.example.ir_semestralka.utils.CrawlerUtil;
 import com.example.ir_semestralka.utils.IOManager;
@@ -15,8 +16,17 @@ public class IrSemestralkaApplication {
         if(!IOManager.createDocumentStorage(false))return;
         //load configuration for crawler
         CrawlerUtil.loadConfigFile();
-        SearchEngine engine = new SearchEngine();
-        engine.createIndex();
+
+        SearchEngine booleanEngine = new SearchEngine();
+        booleanEngine.createIndex(VectorModel.BINARY);
+
+        SearchEngine tfIdfEngine = new SearchEngine(booleanEngine.getIndex());
+        SearchEngine bagOfWordsEngine = new SearchEngine(booleanEngine.getIndex());
+
+        bagOfWordsEngine.createIndex(VectorModel.BAG_OF_WORDS);
+        tfIdfEngine.createIndex(VectorModel.TF_IDF);
+
+
         SpringApplication.run(IrSemestralkaApplication.class, args);
     }
 

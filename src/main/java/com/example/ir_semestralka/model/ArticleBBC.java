@@ -1,14 +1,13 @@
 package com.example.ir_semestralka.model;
 
 public class ArticleBBC implements Article{
-    private String title, author, content;
-    private static int id = 0;
-
-    public ArticleBBC(String author, String title, String content){
+    private final String title, author, content;
+    private final int id;
+    public ArticleBBC(String author, String title, String content, int id){
         this.author = author;
         this.title = title;
         this.content = content;
-        id++;
+        this.id = id;
     }
 
 

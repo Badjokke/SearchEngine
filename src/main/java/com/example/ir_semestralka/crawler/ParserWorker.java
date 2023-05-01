@@ -38,7 +38,7 @@ public class ParserWorker extends Thread {
     private final PageFetcher pageFetcher;
     private final Parser parser;
     private final JSONBuilder jsonBuilder;
-    public ParserWorker(Crawler manager, List<String> xpathExpressions, int politenessInterval){
+    public ParserWorker(Crawler manager, List<String> xpathExpressions, int politenessInterval ){
         this.manager = manager;
         this.xpathExpressions = xpathExpressions;
         this.politenessInterval = politenessInterval;

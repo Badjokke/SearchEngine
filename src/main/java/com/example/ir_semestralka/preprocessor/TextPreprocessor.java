@@ -36,21 +36,59 @@ public class TextPreprocessor {
     public List<String> getTokens(String text){
         return this.preprocessText(text);
     }
-
     private List<String> preprocessText(String text){
         if(text == null)return null;
-        String[] words = text.split("\\s+");
+
+        //toss out all brackets, all quotation marks and numbers - zero value for us
+        text = text
+                .replaceAll("\\(|\\)|\\[|\\]|\\{|\\}|\"|\\d+|\\@|\\/","");
+//                .replaceAll("\"","")
+//                .replaceAll("\\d+","")
+//                .replaceAll("@","");
+
+        //toss out all the dates
+        text = stripDates(text);
+        //get rid of all urls
+        text = stripUrls(text);
+        //split into token by common delimiters
+        String[] words = text.split("\\s+|\\-|\\:|\\.|\\,|\\?|\\!");
         List<String> preprocessedText = new ArrayList<>();
         for(int i = 0; i < words.length; i++){
-            String word = words[i];
-            word = word.toLowerCase(Locale.ROOT).replaceAll("(^[\\d]+$)","");
+            if(words[i].length() < 2)continue;
+            //convert to lowercase
+            String word = words[i].toLowerCase(Locale.ROOT);
+            //toss out html tags
+            word = stripHtml(word);
             if(this.vocabulary.contains(word))
                 continue;
+            //stem the word
             preprocessedText.add(this.stemmer.stem(word));
         }
         return preprocessedText;
     }
 
+
+    private String stripHtml(String word){
+        if(word == null)return null;
+        if(word.charAt(0) != '<')return word;
+        //remove html tags
+        //html is not a natural language, this regex will fail in some obscure cases
+        //but it is good enough for bbc articles
+        word = word.replaceAll("<\\/?!?(\\w+)[^>]*>","");
+        return word;
+    }
+    //regex for dates in format
+    //dd/mm/yyyy, dd-mm-yyyy or dd.mm.yyyy
+    private String stripDates(String text){
+        //regex for date format
+        final String pattern = "([0-9]{1,4}(\\.|\\-|\\/)[0-9]{1,2}(\\.|\\-|\\/)[0-9]{1,4})";
+        return text.replaceAll(pattern,"");
+    }
+    //strip down all urls in text
+    private String stripUrls(String text){
+        final String pattern = "((https:\\/\\/|http:\\/\\/)(www)?[A-Za-z]+\\.[A-Za-z]+[\\/A-Za-z\\-\\.\\?]*)";
+        return text.replaceAll(pattern,"");
+    }
 
 
 
