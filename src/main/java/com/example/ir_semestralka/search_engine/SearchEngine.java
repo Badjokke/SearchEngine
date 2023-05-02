@@ -76,7 +76,7 @@ public class SearchEngine implements ISearchEngine {
     //TODO deep copy
     @Override
     public IIndex getIndex() {
-        return this.invertedIndex;
+        return this.invertedIndex.createDeepCopy();
     }
 
 }

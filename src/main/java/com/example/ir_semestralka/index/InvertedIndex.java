@@ -24,8 +24,13 @@ public class InvertedIndex implements IIndex{
         this.documentTermFrequency = new HashMap<>();
     }
 
-
-
+    public InvertedIndex(Map<String, List<PostingItem>> titleIndex, Map<String, List<PostingItem>> contentIndex, TextPreprocessor preprocessor, Map<String, Integer> collectionTermFrequency, Map<Integer, Map<String, Integer>> documentTermFrequency) {
+        this.titleIndex = titleIndex;
+        this.contentIndex = contentIndex;
+        this.preprocessor = preprocessor;
+        this.collectionTermFrequency = collectionTermFrequency;
+        this.documentTermFrequency = documentTermFrequency;
+    }
 
     @Override
     public void saveIndex() {
@@ -115,8 +120,6 @@ public class InvertedIndex implements IIndex{
 
     //perform tf-idf weighting on terms in index
     private void doTfIdfWeighting(Map<String,List<PostingItem>> index){
-        System.out.println("YO");
-
         Set<String> terms = index.keySet();
         for(String term : terms){
             List<PostingItem> postingList = index.get(term);
@@ -129,10 +132,6 @@ public class InvertedIndex implements IIndex{
             }
 
         }
-
-
-
-
         Log.log(Level.INFO,"tf idf vector model created");
 
 
@@ -165,6 +164,53 @@ public class InvertedIndex implements IIndex{
 
     public int getCollectionSize(){
         return this.documentTermFrequency.size();
+    }
+
+    @Override
+    public IIndex createDeepCopy() {
+        //create a copy of indexes
+        Map<String,List<PostingItem>> tmpTitleIndex = copyIndex(this.titleIndex);
+        Map<String,List<PostingItem>> tmpContentIndex = copyIndex(this.contentIndex);
+        Map<String,Integer> tmpCollectionTermFrequency = new HashMap<>();
+        Map<Integer,Map<String,Integer>> tmpDocumentTermFrequency = new HashMap<>();
+
+        Set<String> keys = this.collectionTermFrequency.keySet();
+        //copy term frequency - very simple
+        for(String key : keys)
+            tmpCollectionTermFrequency.put(key,this.collectionTermFrequency.get(key));
+        //copy document frequency - a bit more complicated because the structure is nested
+        Set<Integer> documentIds = this.documentTermFrequency.keySet();
+        for(Integer id : documentIds){
+            Map<String,Integer> tmpDocFreq = new HashMap<>();
+            tmpDocumentTermFrequency.put(id,tmpDocFreq);
+            Map<String,Integer> docFreq = this.documentTermFrequency.get(id);
+            keys = docFreq.keySet();
+            for(String key : keys){
+                tmpDocFreq.put(key,docFreq.get(key));
+            }
+        }
+
+
+
+
+        IIndex index = new InvertedIndex(tmpTitleIndex,tmpContentIndex,new TextPreprocessor(),tmpCollectionTermFrequency,tmpDocumentTermFrequency);
+        return index;
+    }
+
+    private Map<String,List<PostingItem>> copyIndex(Map<String,List<PostingItem>> index){
+        Set<String> keys = index.keySet();
+        Map<String,List<PostingItem>> tmp = new HashMap<>();
+        for(String key : keys){
+            List<PostingItem> tmpItems = new ArrayList<>();
+            List<PostingItem> indexItems = index.get(key);
+            for(PostingItem item:indexItems){
+                PostingItem tmpItem = new PostingItem(item.getArticleId(),item.getWeight());
+                tmpItems.add(tmpItem);
+            }
+            tmp.put(key,tmpItems);
+        }
+        return tmp;
+
     }
 
 

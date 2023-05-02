@@ -17,4 +17,6 @@ public interface IIndex {
 
     int getCollectionSize();
 
+    IIndex createDeepCopy();
+
 }
