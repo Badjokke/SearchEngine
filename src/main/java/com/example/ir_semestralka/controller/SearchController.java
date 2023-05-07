@@ -1,28 +1,20 @@
 package com.example.ir_semestralka.controller;
-
-import com.example.ir_semestralka.utils.JSONBuilder;
 import com.example.ir_semestralka.utils.Log;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.logging.Level;
 
-//todo napsat tridu obalujici query request pro automatickou serializaci a pohodlnost
 @RestController
-//todo lepe
-//todo dodelat backend obecne, zatim tady simuluju loading, abych ozkousel hooky v reactu
 @CrossOrigin(origins = "http://localhost:3000")
 public class SearchController {
     @RequestMapping(method = RequestMethod.GET,value = "/search",produces = "application/json")
-    public String searchQuery(@RequestParam Optional<String> query){
+    public String searchQuery(@RequestParam String query){
+        if(query == null || query.length() == 0)return "no query provided";
         Log.log(Level.INFO,"Query search recieved");
-        try{
-            Thread.sleep(5000);
-        }
-        catch(InterruptedException exception){
-            System.out.println("kdo me vzbudil??");
-        }
-
+        /*ISearchEngine engine = new SearchEngine();
+        List<Integer> docIds = engine.retrieveDocuments(query);
+        System.out.println(docIds);*/
 
         return "{\"articles\":["+
                 "{" +

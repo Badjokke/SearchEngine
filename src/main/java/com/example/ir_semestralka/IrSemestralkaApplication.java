@@ -1,7 +1,6 @@
 package com.example.ir_semestralka;
 
-import com.example.ir_semestralka.model.VectorModel;
-import com.example.ir_semestralka.search_engine.SearchEngine;
+import com.example.ir_semestralka.global.SearchEngines;
 import com.example.ir_semestralka.utils.CrawlerUtil;
 import com.example.ir_semestralka.utils.IOManager;
 import org.springframework.boot.SpringApplication;
@@ -11,23 +10,18 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class IrSemestralkaApplication {
 
     public static void main(String[] args) {
+        SpringApplication.run(IrSemestralkaApplication.class, args);
+
         //if creating storage failed there is no reason to even start the app
         if(!IOManager.createStorage(false))return;
         if(!IOManager.createDocumentStorage(false))return;
         //load configuration for crawler
         CrawlerUtil.loadConfigFile();
 
-        SearchEngine booleanEngine = new SearchEngine();
-        booleanEngine.createIndex(VectorModel.BINARY);
+        SearchEngines.initEngines();
 
-        SearchEngine tfIdfEngine = new SearchEngine(booleanEngine.getIndex());
-        SearchEngine bagOfWordsEngine = new SearchEngine(booleanEngine.getIndex());
+        SearchEngines.tfIdfEngine.retrieveDocuments("arachnocetnric king queen");
 
-        bagOfWordsEngine.createIndex(VectorModel.BAG_OF_WORDS);
-        tfIdfEngine.createIndex(VectorModel.TF_IDF);
-
-
-        SpringApplication.run(IrSemestralkaApplication.class, args);
     }
 
 }

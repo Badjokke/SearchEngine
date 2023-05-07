@@ -3,7 +3,7 @@
         "politeness":"1500",
         "root_page":"https://www.bbc.com",
         "page_subcategory":"news",
-        "crawling_depth":"3",
+        "crawling_depth":"7",
         "xpaths":[
             "//h1[@id='main-heading']/tidyText()",
             "//div[@class='ssrcss-1u2in0b-Container-ContributorDetails e8mq1e913']/div[1]/tidyText()",

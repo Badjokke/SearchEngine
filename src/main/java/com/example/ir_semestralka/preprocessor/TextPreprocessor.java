@@ -32,7 +32,14 @@ public class TextPreprocessor {
         this.vocabulary = new HashSet<>(Arrays.asList(vocabulary));
     }
 
-
+    public String preprocessWord(String word){
+        word = word.toLowerCase(Locale.ROOT);
+        word = stripParenthesisAndNumbers(word);
+        word = stripDates(word);
+        word = stripUrls(word);
+        word = stripHtml(word);
+        return this.stemmer.stem(word);
+    }
     public List<String> getTokens(String text){
         return this.preprocessText(text);
     }
@@ -40,16 +47,14 @@ public class TextPreprocessor {
         if(text == null)return null;
 
         //toss out all brackets, all quotation marks and numbers - zero value for us
-        text = text
-                .replaceAll("\\(|\\)|\\[|\\]|\\{|\\}|\"|\\d+|\\@|\\/","");
-//                .replaceAll("\"","")
-//                .replaceAll("\\d+","")
-//                .replaceAll("@","");
+        text = stripParenthesisAndNumbers(text);
 
         //toss out all the dates
         text = stripDates(text);
         //get rid of all urls
         text = stripUrls(text);
+        //get rid of emails
+        text = stripEmails(text);
         //split into token by common delimiters
         String[] words = text.split("\\s+|\\-|\\:|\\.|\\,|\\?|\\!");
         List<String> preprocessedText = new ArrayList<>();
@@ -66,7 +71,11 @@ public class TextPreprocessor {
         }
         return preprocessedText;
     }
-
+    private String stripParenthesisAndNumbers(String text){
+        text = text
+                .replaceAll("\\(|\\)|\\[|\\]|\\{|\\}|\"|\\d+|\\@|\\/","");
+        return text;
+    }
 
     private String stripHtml(String word){
         if(word == null)return null;
@@ -89,7 +98,10 @@ public class TextPreprocessor {
         final String pattern = "((https:\\/\\/|http:\\/\\/)(www)?[A-Za-z]+\\.[A-Za-z]+[\\/A-Za-z\\-\\.\\?]*)";
         return text.replaceAll(pattern,"");
     }
-
+    private String stripEmails(String text){
+        final String pattern = "([A-Za-z0-9\\.\\-\\_]+\\@[A-Za-z0-9\\.\\-\\_]+\\.\\w+)";
+        return text.replaceAll(pattern,"");
+    }
 
 
 

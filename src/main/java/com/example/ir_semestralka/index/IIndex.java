@@ -3,7 +3,7 @@ package com.example.ir_semestralka.index;
 import com.example.ir_semestralka.model.Article;
 import com.example.ir_semestralka.model.VectorModel;
 
-import java.util.PriorityQueue;
+import java.util.List;
 
 public interface IIndex {
     void saveIndex();
@@ -18,5 +18,8 @@ public interface IIndex {
     int getCollectionSize();
 
     IIndex createDeepCopy();
+
+    List<Integer> retrieveDocuments(String query,VectorModel vectorModel);
+
 
 }

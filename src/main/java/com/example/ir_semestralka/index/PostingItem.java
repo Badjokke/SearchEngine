@@ -1,6 +1,8 @@
 package com.example.ir_semestralka.index;
 
-public class PostingItem {
+import java.io.Serializable;
+
+public class PostingItem implements Serializable {
     private int articleId;
     private double weight;
 

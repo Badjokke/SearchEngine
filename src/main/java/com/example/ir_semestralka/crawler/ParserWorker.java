@@ -111,7 +111,7 @@ public class ParserWorker extends Thread {
 
         String jsonString = this.jsonBuilder.buildJSON(json);
         try{
-            IOManager.writeJSONfile(jsonString, Constants.crawlerFileStorage+"/article"+manager.getArticleNumber()+".json");
+            IOManager.writeJSONfile(jsonString, Constants.crawlerFileStorage+"/article_"+manager.getArticleNumber()+".json");
         }
         catch (IOException exception){
             exception.printStackTrace();
