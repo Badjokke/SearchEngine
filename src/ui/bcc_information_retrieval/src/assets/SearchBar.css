@@ -1,3 +1,12 @@
 #search-bar-container{
     text-align: center;
 }
+#search-bar-form {
+   border-radius: 16px;
+  }
+  
+  #search-bar-form:focus {
+    outline: none;
+    border-color: #66afe9;
+    box-shadow: 0 0 8px rgba(102,175,233,0.6);
+  }

@@ -9,7 +9,7 @@ public interface ISearchEngine {
     void loadIndex();
     void createIndex();
     void saveIndex();
-    List<Integer> retrieveDocuments(String query,int page);
+    List<Integer> retrieveDocuments(String query);
     IIndex getCopyOfIndex();
     IIndex getIndex();
 

@@ -1,0 +1,27 @@
+.article-preview-container .article-title{
+    font-size: calc(10px + 1vmin);
+}
+
+.article-preview-container .article-author{
+    font-size: calc(5px + 1vmin);
+}
+.article-preview-container .article-preview{
+    font-size: 1.2rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    text-align: justify;
+    text-justify: inter-word;
+}
+
+.article-preview-container{
+    border-radius: 10px;
+    border: 2px solid white;
+    background-color: white;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    color:#282c34; 
+}
+
+.article-item{
+    padding: calc(10px + 1vmin);
+}

@@ -60,16 +60,16 @@ public class SearchEngines {
 
     }
 
-    public static List<Integer> retrieveDocuments(String query, VectorModel model, int page){
+    public static List<Integer> retrieveDocuments(String query, VectorModel model){
         switch (model){
             case BAG_OF_WORDS -> {
-                return bagOfWordsEngine.retrieveDocuments(query,page);
+                return bagOfWordsEngine.retrieveDocuments(query);
             }
             case TF_IDF -> {
-                return tfIdfEngine.retrieveDocuments(query,page);
+                return tfIdfEngine.retrieveDocuments(query);
             }
             case BINARY -> {
-                return booleanEngine.retrieveDocuments(query, page);
+                return booleanEngine.retrieveDocuments(query);
             }
 
         }

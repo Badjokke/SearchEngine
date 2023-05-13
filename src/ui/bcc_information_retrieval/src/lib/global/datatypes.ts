@@ -21,12 +21,9 @@ export interface InputType {
     value: string;
     className: string;
 }
-export interface ArticleListItems{
-    articles: ArticleListItem[]
-}
 export interface ArticleListItem{
         author: string,
         title: string,
-        news_category: string,
-        content: string
+        content: string,
+        id:number
 }

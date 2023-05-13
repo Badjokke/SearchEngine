@@ -23,25 +23,25 @@ public class SearchController {
             jsonObject.put("message","no query provided");
             return ResponseEntity.badRequest().body(JSONBuilder.buildJSON(jsonObject));
         }
+        if(page == 0){
+            jsonObject.put("message","invalid page number");
+            return ResponseEntity.badRequest().body(JSONBuilder.buildJSON(jsonObject));
+        }
         VectorModel model;
         switch (vectorModel){
             case 1 ->model = VectorModel.TF_IDF;
             case 2 -> model = VectorModel.BAG_OF_WORDS;
             default -> model = VectorModel.BINARY;
         }
-        List<Article> retrievedArticles = searchEngineService.retrieveDocuments(query,model,page);
-        String jsonBody = generateArticleJson(retrievedArticles);
-
+        Map<Integer,List<Article>> pagedResult = searchEngineService.retrieveDocuments(query,model,page);
+        //key of the map is the number of pages user can browse
+        int pageCount = (int) pagedResult.keySet().toArray()[0];
+        List<Article> retrievedArticles = pagedResult.get(pageCount);
+        Map<String,Object> tmp = new HashMap<>();
+        tmp.put("page_count",pageCount);
+        tmp.put("articles",retrievedArticles);
+        String jsonBody  = JSONBuilder.buildJSON(tmp);
        return ResponseEntity.ok(jsonBody);
-    }
-
-
-
-    private String generateArticleJson(List<Article> articles){
-        Map<String,Object> json = new HashMap<>();
-        json.put("articles",articles);
-        String jsonString = JSONBuilder.buildJSON(json);
-        return jsonString;
     }
 
 }

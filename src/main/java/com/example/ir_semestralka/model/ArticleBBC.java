@@ -28,6 +28,7 @@ public class ArticleBBC implements Article{
     @Override
     public String toString(){
         Map<String,Object> json = new HashMap<>();
+        json.put("article_id",getId());
         json.put("author",getAuthor());
         json.put("title",getTitle());
         json.put("content",getContent());

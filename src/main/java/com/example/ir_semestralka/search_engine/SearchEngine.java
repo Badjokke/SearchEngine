@@ -24,7 +24,6 @@ public class SearchEngine implements ISearchEngine {
 
     private final IIndex invertedIndex;
     private final QueryParser queryParser;
-    private final int PAGE_SIZE = 10;
     private final VectorModel vectorModel;
     private Map<String,List<Integer>> queryCache;
     public SearchEngine(VectorModel vectorModel){
@@ -87,7 +86,7 @@ public class SearchEngine implements ISearchEngine {
     }
 
     @Override
-    public List<Integer> retrieveDocuments(String query, int page) {
+    public List<Integer> retrieveDocuments(String query) {
         if(query == null || query.length() == 0)return null;
         String tmp = query.trim();
         List<Integer> documents = null;
@@ -97,13 +96,8 @@ public class SearchEngine implements ISearchEngine {
             documents = this.invertedIndex.retrieveDocuments(query,vectorModel);
             cacheQuery(tmp,documents);
         }
-        List<Integer>pagedResults = new ArrayList<>();
-        int start = (page - 1) * PAGE_SIZE;
-        if(start+PAGE_SIZE > documents.size())
-            return documents;
-        for(int i = start; i <start+PAGE_SIZE;i++)
-            pagedResults.add(documents.get(i));
-        return pagedResults;
+        return documents;
+
     }
 
 
