@@ -58,6 +58,14 @@ public class IOManager {
         file.close();
         return true;
     }
+    //returns the number of stored articles
+    public static int getArticleCount(){
+        File f = new File(Constants.crawlerFileStorage);
+        File[] articles = f.listFiles();
+        if(articles == null)return 0;
+        int articleCount = articles.length;
+        return articleCount;
+    }
 
     private static boolean createFile(boolean rewrite, String path) throws IOException{
         File rootStorage = new File(path);
@@ -78,6 +86,7 @@ public class IOManager {
         try{
             br = new BufferedReader(new FileReader(path));
             jsonObject = (JSONObject) jsonParser.parse(br);
+            br.close();
 
         } catch (FileNotFoundException e) {
             Log.log(Level.WARNING,"Failed to load json file from path: "+ path);
@@ -96,6 +105,17 @@ public class IOManager {
 
     }
 
+    public static JSONObject readArticle(int articleId){
+        String path = Constants.crawlerFileStorage+"/article_"+articleId+".json";
+        return readJSONfile(path);
+    }
+
+
+    public static boolean fileExists(String path){
+        File f=  new File(path);
+        return f.exists();
+    }
+
 
     public static String[] loadFileContent(String path, String delimiter) {
         File file = new File(path);
@@ -107,6 +127,7 @@ public class IOManager {
             String line = null;
             while((line = br.readLine())!=null)
                 sb.append(line).append(delimiter);
+            br.close();
         }
         catch (IOException exception){
             Log.log(Level.WARNING,"File not found at: "+path);

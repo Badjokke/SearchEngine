@@ -5,6 +5,7 @@ import com.example.ir_semestralka.model.Article;
 import com.example.ir_semestralka.model.Document;
 import com.example.ir_semestralka.model.VectorModel;
 import com.example.ir_semestralka.preprocessor.TextPreprocessor;
+import com.example.ir_semestralka.utils.InvertedIndexUtils;
 import com.example.ir_semestralka.utils.Log;
 
 import java.io.*;
@@ -18,9 +19,11 @@ public class InvertedIndex implements IIndex{
     private final Map<Integer,Map<String,Double>> documentTermWeight;
     private final Map<Integer,Map<String,Integer>> documentTermFrequency;
     private final Map<Integer,Double> documentSize;
-
+    private final InvertedIndexUtils utils;
     private final TextPreprocessor preprocessor;
-
+    //threshold from which documents are no longer considered relevant
+    private final double THRESH_HOLD = 0.15;
+    private final int PAGE_SIZE = 20;
     public InvertedIndex(){
         this.titleIndex = new HashMap<>();
         this.contentIndex = new HashMap<>();
@@ -29,6 +32,7 @@ public class InvertedIndex implements IIndex{
         this.documentTermFrequency = new HashMap<>();
         this.documentSize = new HashMap<>();
         this.documentTermWeight =  new HashMap<>();
+        utils = new InvertedIndexUtils();
     }
 
     public InvertedIndex(Map<String, List<PostingItem>> titleIndex, Map<String, List<PostingItem>> contentIndex, TextPreprocessor preprocessor, Map<String, Integer> collectionTermFrequency, Map<Integer, Map<String, Integer>> documentTermFrequency) {
@@ -39,6 +43,8 @@ public class InvertedIndex implements IIndex{
         this.documentTermFrequency = documentTermFrequency;
         this.documentSize = new HashMap<>();
         this.documentTermWeight =  new HashMap<>();
+        utils = new InvertedIndexUtils();
+
     }
     //calculate the length of the document
     // the l2 norm of vector
@@ -63,54 +69,14 @@ public class InvertedIndex implements IIndex{
     }
 
     @Override
-    public void saveIndex() {
-        File f = new File(Constants.indexRoot);
-        if(!f.exists())
-            f.mkdir();
-        try{
-            //save the title index
-
-            f.mkdirs();
-            FileOutputStream fs = new FileOutputStream(Constants.titleIndexPath);
-            ObjectOutputStream outputStream = new ObjectOutputStream(fs);
-            outputStream.writeObject(titleIndex);
-            outputStream.close();
-            fs.close();
-
-            fs = new FileOutputStream(Constants.contentIndexPath);
-            outputStream = new ObjectOutputStream(fs);
-            outputStream.writeObject(contentIndex);
-            outputStream.close();
-            fs.close();
-
-            fs = new FileOutputStream(Constants.collectionTermFrequencyPath);
-            outputStream = new ObjectOutputStream(fs);
-            outputStream.writeObject(collectionTermFrequency);
-            outputStream.close();
-            fs.close();
-
-            fs = new FileOutputStream(Constants.documentTermFrequencyPath);
-            outputStream = new ObjectOutputStream(fs);
-            outputStream.writeObject(documentTermFrequency);
-            outputStream.close();
-            fs.close();
-
-            fs = new FileOutputStream(Constants.documentSizePath);
-            outputStream = new ObjectOutputStream(fs);
-            outputStream.writeObject(documentSize);
-            outputStream.close();
-            fs.close();
-
-
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void saveIndex(VectorModel model) {
+        utils.saveIndex(titleIndex,contentIndex,collectionTermFrequency,documentTermFrequency,documentSize,model);
         Log.log(Level.INFO,"Index saved on disk!");
     }
 
     @Override
-    public void loadIndex() {
+    public void loadIndex(VectorModel model) {
+        utils.loadIndex(titleIndex,contentIndex,collectionTermFrequency,documentTermFrequency,documentSize,model);
 
     }
 
@@ -148,7 +114,9 @@ public class InvertedIndex implements IIndex{
         currentDocTermFrequency.put(token,newCount);
 
     }
-
+    //adds document to inverted index with binary weights
+    //this method is used when the index is being created
+    //the weighting is performed after construction of the base data structure
     @Override
     public void indexDocument(Article article) {
         final int articleId = article.getId();
@@ -168,6 +136,7 @@ public class InvertedIndex implements IIndex{
         return this.titleIndex.isEmpty();
     }
 
+    //assign weights to items in posting list
     @Override
     public void convertToVectorModel(VectorModel model) {
         switch (model){
@@ -194,51 +163,55 @@ public class InvertedIndex implements IIndex{
         int collectionSize = getCollectionSize();
         for(String term : terms){
             List<PostingItem> postingList = index.get(term);
-            int documentFrequency = postingList.size();
-            for(PostingItem item : postingList){
-                int documentId = item.getArticleId();
-                int termFrequency = this.documentTermFrequency.get(documentId).get(term);
-                double weight = this.calculateTfIdf(termFrequency,documentFrequency,collectionSize);
-                if(!this.documentTermWeight.containsKey(documentId))
-                    this.documentTermWeight.put(documentId,new HashMap<>());
-                //store term with tf idf weight for every document in hashmap so we dont have to iterate over posting lists
-                this.documentTermWeight.get(documentId).put(term,weight);
-
-                item.setWeight(weight);
-            }
-
+            tfIdfWeighting(postingList,term,collectionSize);
         }
         Log.log(Level.INFO,"tf idf vector model created");
 
 
     }
-    //method creates bag of words vector model - weight of term is given by its frequency
+    //method creates bag of words vector model - weight of term is given by its frequency in collection
     private void doBagOfWordsWeighting(Map<String,List<PostingItem>> index){
         Set<String> terms = index.keySet();
         for(String term : terms){
             List<PostingItem> postingList = index.get(term);
-            final int termFrequency = calculateTermFreq(term);
-
-            for(PostingItem item : postingList){
-                int documentId = item.getArticleId();
-                item.setWeight(termFrequency);
-                if(!this.documentTermWeight.containsKey(documentId))
-                    this.documentTermWeight.put(documentId,new HashMap<>());
-                this.documentTermWeight.get(documentId).put(term,(double)termFrequency);
-            }
+            bagOfWordsWeight(postingList,term);
         }
         Log.log(Level.INFO,"Bag of words model created");
-
-
-
     }
 
-    public double calculateTfIdf(int termFrequency, int documentFrequency, int documentCollectionSize){
-        if(termFrequency == 0)return 0.0;
-        double tf = 1 + Math.log10(termFrequency);
-        double idf = Math.log10((double)documentCollectionSize/documentFrequency);
-        return tf * idf;
+    private void bagOfWordsWeight(List<PostingItem> postingList, String term){
+        final int termFrequency = calculateTermFreq(term);
+        for(PostingItem item : postingList){
+            int documentId = item.getArticleId();
+            item.setWeight(termFrequency);
+            if(!this.documentTermWeight.containsKey(documentId))
+                this.documentTermWeight.put(documentId,new HashMap<>());
+            this.documentTermWeight.get(documentId).put(term,(double)termFrequency);
+        }
+    }
 
+    private void tfIdfWeighting(List<PostingItem> postingList, String term, int collectionSize){
+        int documentFrequency = postingList.size();
+        for(PostingItem item : postingList){
+            int documentId = item.getArticleId();
+            int termFrequency = this.documentTermFrequency.get(documentId).get(term);
+            double weight = this.calculateTfIdf(termFrequency,documentFrequency,collectionSize);
+            if(!this.documentTermWeight.containsKey(documentId))
+                this.documentTermWeight.put(documentId,new HashMap<>());
+            //store term with tf idf weight for every document in hashmap so we dont have to iterate over posting lists
+            this.documentTermWeight.get(documentId).put(term,weight);
+
+            item.setWeight(weight);
+        }
+    }
+
+
+    //compute tf-idf weight for given term
+    //tf idf weight value is dependent on the documentFrequency - how many documents contain the term
+    //termFrequency - how often does the term appear in the entire collection = rarer terms have higher value
+    //and lastly the number of all documents in our collection
+    public double calculateTfIdf(int termFrequency, int documentFrequency, int documentCollectionSize){
+        return utils.calculateTfIdf(termFrequency,documentFrequency,documentCollectionSize);
     }
     public int calculateTermFreq(String term){
         return this.collectionTermFrequency.get(term);
@@ -251,52 +224,25 @@ public class InvertedIndex implements IIndex{
     @Override
     public IIndex createDeepCopy() {
         //create a copy of indexes
-        Map<String,List<PostingItem>> tmpTitleIndex = copyIndex(this.titleIndex);
-        Map<String,List<PostingItem>> tmpContentIndex = copyIndex(this.contentIndex);
-        Map<String,Integer> tmpCollectionTermFrequency = new HashMap<>();
-        Map<Integer,Map<String,Integer>> tmpDocumentTermFrequency = new HashMap<>();
-        Set<String> keys = this.collectionTermFrequency.keySet();
-        //copy term frequency - very simple
-        for(String key : keys)
-            tmpCollectionTermFrequency.put(key,this.collectionTermFrequency.get(key));
-        //copy document frequency - a bit more complicated because the structure is nested
-        Set<Integer> documentIds = this.documentTermFrequency.keySet();
-        for(Integer id : documentIds){
-            Map<String,Integer> tmpDocFreq = new HashMap<>();
-            tmpDocumentTermFrequency.put(id,tmpDocFreq);
-            Map<String,Integer> docFreq = this.documentTermFrequency.get(id);
-            keys = docFreq.keySet();
-            for(String key : keys){
-                tmpDocFreq.put(key,docFreq.get(key));
-            }
-        }
-        return new InvertedIndex(tmpTitleIndex,tmpContentIndex,new TextPreprocessor(),tmpCollectionTermFrequency,tmpDocumentTermFrequency);
+        return this.utils.createDeepCopy(titleIndex,contentIndex,collectionTermFrequency,documentTermFrequency);
     }
-
-    @Override
-    public List<Integer> retrieveDocuments(String query,VectorModel vectorModel) {
-        //if(vectorModel == VectorModel.BINARY)
-        //    return booleanRetrieval(query);
+    private Object[] retrieveDocumentsFromIndex(List<String>queryTerms, VectorModel model, Map<String,List<PostingItem>> index){
         double queryNorm = 0;
-        List<String> tokens = getQueryToken(query);
-        //ids of the most relevant articles
-        List<Integer> relevantDocuments = new ArrayList<>();
-        //all retrieved documents relevant to the query
         Map<Integer,Double> retrieved = new HashMap<>();
         int collectionSize = getCollectionSize();
         //dot product on query and all relevant documents
-        for(String token : tokens){
+        for(String token : queryTerms){
             //unknown word in the collection - ignore it
-            if(!this.contentIndex.containsKey(token))continue;
+            if(!index.containsKey(token))continue;
             // number of documents which contain this term
-            int documentFrequency = this.contentIndex.get(token).size();
+            int documentFrequency = index.get(token).size();
             //each term in the query appears exactly once
             int termFrequency = 1;
             //weight in the query is either 1 - if bag of words model is used or tf-idf value
-            double weight = vectorModel==VectorModel.TF_IDF ? calculateTfIdf(termFrequency,documentFrequency,collectionSize) : 1;
+            double weight = model==VectorModel.TF_IDF ? calculateTfIdf(termFrequency,documentFrequency,collectionSize) : 1;
             queryNorm += weight*weight;
             //posting list for this term
-            List<PostingItem> postingList = this.contentIndex.get(token);
+            List<PostingItem> postingList = index.get(token);
 
             for(PostingItem item : postingList){
                 int articleId = item.getArticleId();
@@ -310,11 +256,6 @@ public class InvertedIndex implements IIndex{
 
                 retrieved.put(articleId,w);
             }
-
-
-
-
-            //3) najit K nejrelevantnejsich
         }
         queryNorm = Math.sqrt(queryNorm);
         Set<Integer> relevantDocumentIds = retrieved.keySet();
@@ -323,7 +264,8 @@ public class InvertedIndex implements IIndex{
             double dotProduct = retrieved.get(relevantDocumentId);
             //cosine distance between query and document
             double relevance = dotProduct / (queryNorm * getDocumentLength(relevantDocumentId));
-            help.add(new Document(relevantDocumentId,relevance));
+            if(relevance > THRESH_HOLD)
+                help.add(new Document(relevantDocumentId,relevance));
         }
         Object[] docs = help.toArray();
         Arrays.sort(docs, new Comparator<Object>() {
@@ -338,12 +280,103 @@ public class InvertedIndex implements IIndex{
                 return 0;
             }
         });
-
-        //vytahni prvnich K dokumentu a vrat je - uloz do soubory na FS vsechny ostatni
-
-
-        return null;
+        return docs;
     }
+    @Override
+    public List<Integer> retrieveDocuments(String query,VectorModel vectorModel) {
+        //if(vectorModel == VectorModel.BINARY)
+        //    return booleanRetrieval(query);
+        List<Integer> articleIds = new ArrayList<>();
+        List<String> tokens = getQueryToken(query);
+        Object[] relevantDocumentsByTitle = retrieveDocumentsFromIndex(tokens,vectorModel,titleIndex);
+        Object[] relevantDocumentsByContent = null;
+        if(relevantDocumentsByTitle.length < PAGE_SIZE){
+            relevantDocumentsByContent = retrieveDocumentsFromIndex(tokens,vectorModel,contentIndex);
+        }
+        //merge two sorted arrays into list of documents
+        if(relevantDocumentsByContent != null){
+            return mergeDocumentArrays(relevantDocumentsByTitle,relevantDocumentsByContent);
+        }
+
+        for(int i = 0; i <relevantDocumentsByTitle.length; i++){
+            Document d = (Document) relevantDocumentsByTitle[i];
+            articleIds.add(d.getId());
+        }
+        return articleIds;
+    }
+
+    private List<Integer> mergeDocumentArrays(Object[] relevantDocumentsByTitle, Object[] relevantDocumentsByContent) {
+        Set<Integer> ids = new HashSet<>();
+        int titlePointer = 0;
+        int contentPointer = 0;
+        while(true){
+            if(titlePointer == relevantDocumentsByTitle.length && contentPointer == relevantDocumentsByContent.length)
+                break;
+            //copy rest of the content documents
+            if(titlePointer == relevantDocumentsByTitle.length){
+                for(int i = contentPointer; i < relevantDocumentsByContent.length;i++){
+                    Document d = (Document) relevantDocumentsByContent[i];
+                    ids.add(d.getId());
+                }
+                break;
+            }
+            //copy rest of the title documents
+            if(contentPointer == relevantDocumentsByContent.length){
+                for(int i = titlePointer; i < relevantDocumentsByTitle.length;i++){
+                    Document d = (Document) relevantDocumentsByTitle[i];
+                    ids.add(d.getId());
+                }
+                break;
+            }
+            Document titleDocument = (Document)relevantDocumentsByTitle[titlePointer];
+            Document contentDocument = (Document) relevantDocumentsByContent[contentPointer];
+
+            if(titleDocument.getRelevance()>contentDocument.getRelevance()){
+                ids.add(titleDocument.getId());
+                titlePointer++;
+                continue;
+            }
+            ids.add(contentDocument.getId());
+            contentPointer++;
+
+
+        }
+        return ids.stream().toList();
+    }
+
+    @Override
+    public void indexNewDocument(Article article,VectorModel vectorModel) {
+        final int articleId = article.getId();
+        final String articleTitle = article.getTitle();
+        final String articleContent = article.getContent();
+
+        List<String> titlePreprocessed = this.preprocessor.getTokens(articleTitle);
+        List<String> articlePreprocessed = this.preprocessor.getTokens(articleContent);
+
+        processText(titlePreprocessed,articleId,this.titleIndex);
+        processText(articlePreprocessed,articleId,this.contentIndex);
+        //recalculate weights
+        //should be done for the entire index, because they term frequency / document frequency is changed,
+        //but it is too expensive
+        recalculatePostingListsWeight(titlePreprocessed,titleIndex, vectorModel);
+        recalculatePostingListsWeight(articlePreprocessed,contentIndex,vectorModel);
+
+    }
+    //recalculate the posting list weights for new document
+    private void recalculatePostingListsWeight(List<String> terms, Map<String,List<PostingItem>> index, VectorModel model){
+        //by default the document is indexed with binary weights
+        if(model == VectorModel.BINARY)return;
+        int collectionSize = getCollectionSize();
+        for(String term : terms){
+            List<PostingItem> l = index.get(term);
+            switch (model){
+                case TF_IDF -> tfIdfWeighting(l,term,collectionSize);
+                case BAG_OF_WORDS -> bagOfWordsWeight(l,term);
+            }
+
+        }
+    }
+
     //boolean retrieval - only AND logical connection
     //TODO IF TIME
     private  List<Integer> booleanRetrieval(String query){
@@ -356,27 +389,9 @@ public class InvertedIndex implements IIndex{
         return null;
     }
 
-
+    //preprocess query and remove duplicate terms
     private List<String> getQueryToken(String query){
-        List<String> tokens = new ArrayList<>(new HashSet<>(this.preprocessor.getTokens(query)));
-        return tokens;
+        return new ArrayList<>(new HashSet<>(this.preprocessor.getTokens(query)));
     }
-
-    private Map<String,List<PostingItem>> copyIndex(Map<String,List<PostingItem>> index){
-        Set<String> keys = index.keySet();
-        Map<String,List<PostingItem>> tmp = new HashMap<>();
-        for(String key : keys){
-            List<PostingItem> tmpItems = new ArrayList<>();
-            List<PostingItem> indexItems = index.get(key);
-            for(PostingItem item:indexItems){
-                PostingItem tmpItem = new PostingItem(item.getArticleId(),item.getWeight());
-                tmpItems.add(tmpItem);
-            }
-            tmp.put(key,tmpItems);
-        }
-        return tmp;
-
-    }
-
 
 }

@@ -12,7 +12,10 @@ import com.example.ir_semestralka.utils.Log;
 import org.json.simple.JSONObject;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,23 +24,26 @@ public class SearchEngine implements ISearchEngine {
 
     private final IIndex invertedIndex;
     private final QueryParser queryParser;
+    private final int PAGE_SIZE = 10;
     private final VectorModel vectorModel;
+    private Map<String,List<Integer>> queryCache;
     public SearchEngine(VectorModel vectorModel){
         this.invertedIndex = new InvertedIndex();
         this.queryParser = new DefaultQueryParser();
         this.vectorModel = vectorModel;
+        this.queryCache = new HashMap<>();
     }
     public SearchEngine(IIndex index,VectorModel vectorModel){
         this.invertedIndex = index;
         this.queryParser = new DefaultQueryParser();
         this.vectorModel = vectorModel;
-
+        this.queryCache = new HashMap<>();
     }
 
 
     @Override
     public void loadIndex(){
-        invertedIndex.loadIndex();
+        invertedIndex.loadIndex(vectorModel);
     }
 
     @Override
@@ -77,19 +83,54 @@ public class SearchEngine implements ISearchEngine {
 
     @Override
     public void saveIndex() {
-        invertedIndex.saveIndex();
+        invertedIndex.saveIndex(vectorModel);
     }
 
     @Override
-    public List<Integer> retrieveDocuments(String query) {
-        if(query == null)return null;
-        return this.invertedIndex.retrieveDocuments(query,vectorModel);
-
+    public List<Integer> retrieveDocuments(String query, int page) {
+        if(query == null || query.length() == 0)return null;
+        String tmp = query.trim();
+        List<Integer> documents = null;
+        if(this.queryCache.containsKey(tmp))
+            documents = this.queryCache.get(tmp);
+        else {
+            documents = this.invertedIndex.retrieveDocuments(query,vectorModel);
+            cacheQuery(tmp,documents);
+        }
+        List<Integer>pagedResults = new ArrayList<>();
+        int start = (page - 1) * PAGE_SIZE;
+        if(start+PAGE_SIZE > documents.size())
+            return documents;
+        for(int i = start; i <start+PAGE_SIZE;i++)
+            pagedResults.add(documents.get(i));
+        return pagedResults;
     }
-    //TODO deep copy
+
+
+    private void cacheQuery(String query, List<Integer> documentIds){
+        //todo cache to db or filesystem for scale
+        //scaling is not a big deal in school project
+        this.queryCache.put(query,documentIds);
+    }
+
+
+    //returns deep copy of index
     @Override
-    public IIndex getIndex() {
+    public IIndex getCopyOfIndex() {
         return this.invertedIndex.createDeepCopy();
     }
+    //returns shallow copy of index
+    @Override
+    public IIndex getIndex() {
+        return this.invertedIndex;
+    }
+
+    @Override
+    public void addNewDocumentToIndex(Article article) {
+        //invalidate the cache because query results might differ
+        this.queryCache = new HashMap<>();
+        this.invertedIndex.indexNewDocument(article,this.vectorModel);
+    }
+
 
 }

@@ -22,7 +22,7 @@ public class CrawlerUtil {
     private static String rootPage;
     //subcategory we want to crawl, can be null
     private static String pageSubcategory;
-
+    private static boolean isActive = false;
     /*public CrawlerUtil(){
         //initialize default values of crawler
         this.crawlingDepth = 1;
@@ -34,6 +34,13 @@ public class CrawlerUtil {
         config = IOManager.readJSONfile(Constants.CRAWLER_CONFIG_PATH);
         this.parseConfigFile();
     }*/
+
+    public synchronized static void setIsActive(boolean active){
+        isActive = active;
+    }
+    public synchronized static boolean isActive(){
+        return isActive;
+    }
 
     public static void loadConfigFile(){
         config = IOManager.readJSONfile(Constants.CRAWLER_CONFIG_PATH);

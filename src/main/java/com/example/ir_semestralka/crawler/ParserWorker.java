@@ -62,13 +62,15 @@ public class ParserWorker extends Thread {
             if(p == null)continue;
             List<List<String>> parsedData = evalPage(p);
             processArticle(parsedData);
-
+            /*
             try {
                 Thread.sleep(politenessInterval);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Log.log(Level.SEVERE, "Parser worker thread sleep exception.");
             }
+            */
+
         }
     }
 
@@ -83,6 +85,9 @@ public class ParserWorker extends Thread {
             List<String> relatedArticles = parsedData.get(3);
             for(String url : relatedArticles)
                 this.manager.addUrlToNestedQueue(url);
+            //something failed in parsing the article (timeout or something like that)
+            if(content.size() == 0 || titles.size() == 0)
+                return;
             createBBCJSONFile(titles,authors,content);
 
 

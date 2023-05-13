@@ -1,5 +1,10 @@
 package com.example.ir_semestralka.model;
 
+import com.example.ir_semestralka.utils.JSONBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class ArticleBBC implements Article{
     private final String title, author, content;
     private final int id;
@@ -20,5 +25,13 @@ public class ArticleBBC implements Article{
     public String getContent(){return this.content;}
 
     public int getId(){return id;}
+    @Override
+    public String toString(){
+        Map<String,Object> json = new HashMap<>();
+        json.put("author",getAuthor());
+        json.put("title",getTitle());
+        json.put("content",getContent());
+        return JSONBuilder.buildJSON(json);
+    }
 
 }

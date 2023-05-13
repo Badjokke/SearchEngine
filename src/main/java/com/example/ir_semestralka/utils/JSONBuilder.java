@@ -2,15 +2,22 @@ package com.example.ir_semestralka.utils;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class JSONBuilder {
+    /**
+     * Method transforms map into string representation of JSON object
+     * @param json key value pair that will be generated as json line
+     * @return String representation of JSON object
+     * */
 
+    public static String buildJSON(Map<String,Object> json){
 
-    public String buildJSON(HashMap<String,Object> json){
         JSONObject jsonObject = new JSONObject();
         for(String key : json.keySet()){
             jsonObject.put(key,parseJSONValue(json.get(key)));
@@ -19,7 +26,8 @@ public class JSONBuilder {
 
         return jsonString;
     }
-    private Object parseJSONValue(Object value){
+
+    private static Object parseJSONValue(Object value){
 
         if(value instanceof HashMap<?,?>){
             Map<String,Object> map = null;
@@ -41,14 +49,28 @@ public class JSONBuilder {
             ArrayList<Object> list;
             list = (ArrayList<Object>) value;
             for(int i = 0,n=list.size(); i < n; i++)
-                jsonArray.add(parseJSONValue(list.get(i)));
+                jsonArray.add(parseJSONValue(list.get(i).toString()));
             return jsonArray;
         }
 
 
         //some simple data type without any indentation, we can just return it
-        return value;
+        return value.toString();
     }
+
+    /**
+     * Transform string json to json object
+     * @param jsonString json object in string type
+     * @return JSONObject parsed string
+     */
+    public static JSONObject parseJSON(String jsonString) throws ParseException {
+        if(jsonString == null||jsonString.length()==0) return null;
+        JSONParser parser = new JSONParser();
+        JSONObject json = (JSONObject) parser.parse(jsonString);
+        return json;
+    }
+
+
 
 
 

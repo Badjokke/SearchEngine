@@ -1,6 +1,7 @@
 package com.example.ir_semestralka.crawler;
 
 import com.example.ir_semestralka.utils.CrawlerUtil;
+import com.example.ir_semestralka.utils.IOManager;
 import com.example.ir_semestralka.utils.Log;
 
 import java.util.*;
@@ -15,6 +16,7 @@ public class Crawler {
     //urls we scrape from the article for additional context information
     private Set<String> nestedUrls;
 
+    private Set<String> allVisitedUrls;
 
     /**
      * initialized from config file
@@ -32,7 +34,11 @@ public class Crawler {
         this.parserWorkerWorkers = new ParserWorker[parserWorkerPool];
         this.urls = new HashSet<>();
         this.nestedUrls = new HashSet<>();
-        articleNumber = 1;
+        this.allVisitedUrls = new HashSet<>();
+        articleNumber = IOManager.getArticleCount()+1;
+    }
+    public String getRootPage(){
+        return this.rootPage;
     }
 
     /**
@@ -41,8 +47,10 @@ public class Crawler {
      * and creates storage folders if they dont exists
      */
     public void crawlSeedPage(){
+        CrawlerUtil.setIsActive(true);
         Log.log(Level.INFO,"Crawler starting at page: "+ this.subCategoryPage);
         run();
+        CrawlerUtil.setIsActive(false);
         Log.log(Level.INFO,"Crawling finished");
 
     }
@@ -52,8 +60,23 @@ public class Crawler {
      * Second access to crawling utility, crawls only the given url
      * @param url
      */
-    public void crawl(String url){
+    public boolean crawl(String url){
+        ParserWorker worker = new ParserWorker(this,xPaths,politenessInterval);
+        addUrlToQueue(url);
+        iterator = this.urls.iterator();
+        worker.start();
+        try{
+            worker.join();
+        }
+        catch (InterruptedException e){
+            e.printStackTrace();
+            return false;
+        }
+        return true;
 
+    }
+    public int getCurrentArticleId(){
+        return this.articleNumber;
     }
 
     public synchronized int getArticleNumber(){
@@ -93,18 +116,24 @@ public class Crawler {
      * Adds url to set of urls we will process
      * @param url url of a page we want to parse
      */
-    public synchronized void addUrlToQueue(String url){
-        if(this.urls.contains(url))return;
+    public void addUrlToQueue(String url){
+        if(this.allVisitedUrls.contains(url))
+            return;
+        this.allVisitedUrls.add(url);
+
         if(!url.contains(rootPage))
             url = rootPage + url;
+
         this.urls.add(url);
 
     }
 
     public synchronized void addUrlToNestedQueue(String url){
-        if(this.nestedUrls.contains(url) || this.urls.contains(url))return;
-        if(!nestedUrls.contains(rootPage))
+        if(this.allVisitedUrls.contains(url))return;
+        this.allVisitedUrls.add(url);
+        if(!url.contains(rootPage))
             url = rootPage + url;
+
         this.nestedUrls.add(url);
     }
 
@@ -140,12 +169,19 @@ public class Crawler {
         urlParser.setXPaths(xpaths);
 
         for(String seedUrl : seedUrls){
+            if(this.allVisitedUrls.contains(seedUrl))
+                continue;
+            allVisitedUrls.add(seedUrl);
             if(!seedUrl.contains(rootPage))
                 seedUrl = rootPage + seedUrl;
+
             parsedPage = urlParser.crawlUrls(seedUrl);
             List<String> tmp = parsedPage.get(0);
-            for(String articleUrl : tmp)
+            for(String articleUrl : tmp){
+
                 addUrlToQueue(articleUrl);
+
+            }
         }
 
 
