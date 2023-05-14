@@ -25,5 +25,11 @@ export interface ArticleListItem{
         author: string,
         title: string,
         content: string,
-        id:number
+        article_id:number
+}
+
+export interface Article{
+    author:string,
+    title: string,
+    content:string
 }

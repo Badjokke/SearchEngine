@@ -18,7 +18,12 @@ const Apis = {
         {
             url:`${rootUrl}/crawler`,
             method: "POST"
-        }
+        },
+    articleAPI:
+    {
+        url: `${rootUrl}/article`,
+        method:"GET"
+    }
 
 }
 export default Apis

@@ -1,4 +1,5 @@
 import React from "react";
+import "../assets/Button.css"
 //Komponenta reprezentujici tlacitko v HTML
 const Button = (props:{ className:string, text:string, id:string})=>{
 

@@ -12,6 +12,10 @@ const Search = () => {
     //v tomto pripade neukazuje "nikam" - provede se refresh stranky, to urcite neni chtene chovani
     const fetchSearchResults = async (event:React.FormEvent) =>{
         event.preventDefault();
+        if(!searchQuery){
+            alert("No query provided.");
+            return;
+        }
         const res = await fetchDocuments(searchQuery);
         const documents = res.articles;
         const pageCount = res.pageCount;
@@ -23,6 +27,7 @@ const Search = () => {
     }
 
     const fetchPage =async (pageNumber:number) => {
+       
         const res = await fetchDocuments(searchQuery,1,pageNumber);
         const documents = res.articles;
         setDocuments(documents);

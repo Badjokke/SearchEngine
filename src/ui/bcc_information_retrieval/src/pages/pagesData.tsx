@@ -2,7 +2,7 @@ import {RouterRefs, RouterType} from "../lib/global/datatypes";
 import Search from "../pages/search/Search";
 import Upload from "../pages/upload/Upload";
 import Crawler from "../pages/crawler/Crawler";
-import ArticlePreview from "./ArticlePreview";
+import Article from "./Article";
 export const pages: RouterType[] = [
     {
         path:"",
@@ -21,7 +21,7 @@ export const pages: RouterType[] = [
     },
     {
         path:"/article",
-        element:<ArticlePreview/>,
+        element:<Article/>,
         title:""
     }
 ];

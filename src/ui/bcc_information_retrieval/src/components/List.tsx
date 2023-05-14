@@ -13,8 +13,8 @@ const List = (props:{list:ArticleListItem[], pageCount:number, pageFunction:Func
     })
     
     const list = props.list;
-    const items = list.map(({id,author,title,content}:ArticleListItem,index)=>{
-        return <ArticlePreview article_id={id} author={author} title={title} articleSnippet={content} key={index}/>
+    const items = list.map(({article_id,author,title,content}:ArticleListItem,index)=>{
+        return <ArticlePreview article_id={article_id} author={author} title={title} articleSnippet={content} key={index}/>
     });
 
 
