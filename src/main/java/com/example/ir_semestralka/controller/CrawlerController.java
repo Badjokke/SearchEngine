@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
 public class CrawlerController {
     @Autowired
     private ICrawler crawler;

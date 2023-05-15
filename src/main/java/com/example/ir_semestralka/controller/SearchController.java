@@ -27,12 +27,17 @@ public class SearchController {
             jsonObject.put("message","invalid page number");
             return ResponseEntity.badRequest().body(JSONBuilder.buildJSON(jsonObject));
         }
-        VectorModel model;
+        if(vectorModel > 3 || vectorModel < 1){
+            jsonObject.put("message","invalid vector model");
+            return ResponseEntity.badRequest().body(JSONBuilder.buildJSON(jsonObject));
+        }
+        VectorModel model = null;
         switch (vectorModel){
             case 1 ->model = VectorModel.TF_IDF;
             case 2 -> model = VectorModel.BAG_OF_WORDS;
-            default -> model = VectorModel.BINARY;
+            case 3 -> model = VectorModel.BINARY;
         }
+
         Map<Integer,List<Article>> pagedResult = searchEngineService.retrieveDocuments(query,model,page);
         //key of the map is the number of pages user can browse
         int pageCount = (int) pagedResult.keySet().toArray()[0];

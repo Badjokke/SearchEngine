@@ -1,7 +1,8 @@
 import React from "react";
 import "../assets/Button.css"
+import { ButtonType } from "../lib/global/datatypes";
 //Komponenta reprezentujici tlacitko v HTML
-const Button = (props:{ className:string, text:string, id:string})=>{
+const Button = (props:{ className:string, text:string, id:string, type:ButtonType, onClick?:Function})=>{
 
     //trida, kterou tlacitko dostane - pro chyceni CSS pravidel
     const className = props.className;
@@ -9,9 +10,10 @@ const Button = (props:{ className:string, text:string, id:string})=>{
     const text = props.text;
     // identifikator elementu
     const id = props.id;
+    const type = props.type;
     //samotne vraceni tlacitka v JSX syntaxi (babel provadi preklad)
     return (
-    <button type={"submit"} className={className} id={id}>{text}</button>
+    <button type={type} className={className} onClick={props.onClick?props.onClick():null} id={id}>{text}</button>
     )
 }
 

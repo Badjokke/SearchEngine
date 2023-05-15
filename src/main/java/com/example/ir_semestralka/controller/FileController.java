@@ -21,8 +21,12 @@ public class FileController {
 
     @PostMapping("/uploadFile")
     public ResponseEntity<String> uploadFile(@RequestBody MultipartFile file){
-        String filename = fileStorageService.storeFile(file);
         Map<String,Object> json = new HashMap<>();
+        if(file == null){
+            json.put("message","no file sent in the request");
+            return ResponseEntity.badRequest().body(JSONBuilder.buildJSON(json));
+        }
+        String filename = fileStorageService.storeFile(file);
         json.put("message",filename+" uploaded and indexed.");
         String jsonString = JSONBuilder.buildJSON(json);
         return ResponseEntity.ok(jsonString);

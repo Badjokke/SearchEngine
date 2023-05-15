@@ -11,12 +11,12 @@ const Apis = {
         },
     uploadAPI:
         {
-            url : `${rootUrl}/upload`,
-            method: "POST"
+            url : `${rootUrl}/uploadFile`,
+            method: "POST"  
         },
     crawlerAPI :
         {
-            url:`${rootUrl}/crawler`,
+            url:`${rootUrl}/crawl_page`,
             method: "POST"
         },
     articleAPI:

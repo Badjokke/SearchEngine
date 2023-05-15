@@ -1,0 +1,23 @@
+
+  
+  .radio-button-container label {
+    display: inline-block;
+    margin-right: 10px;
+    font-weight: bold;
+  }
+  
+ 
+  
+  .radio-button-container input[type="radio"] + label {
+    padding: 5px 10px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .radio-button-container input[type="radio"]:checked + label {
+    background-color: #2196F3;
+    color: #fff;
+    border-color: #2196F3;
+  }

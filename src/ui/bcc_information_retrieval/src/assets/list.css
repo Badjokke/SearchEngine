@@ -1,7 +1,7 @@
 .paging-container ul
 {
   display:flex;  
-  list-style:none;
+  list-style: none;
   gap: 10px;
 }
 .paging-container a {

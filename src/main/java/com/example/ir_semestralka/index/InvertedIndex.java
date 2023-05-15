@@ -23,7 +23,7 @@ public class InvertedIndex implements IIndex{
     private final TextPreprocessor preprocessor;
     //threshold from which documents are no longer considered relevant
     private final double THRESH_HOLD = 0.15;
-    private final int PAGE_SIZE = 20;
+    private final int PAGE_SIZE = 10;
     public InvertedIndex(){
         this.titleIndex = new HashMap<>();
         this.contentIndex = new HashMap<>();
@@ -239,7 +239,7 @@ public class InvertedIndex implements IIndex{
             //each term in the query appears exactly once
             int termFrequency = 1;
             //weight in the query is either 1 - if bag of words model is used or tf-idf value
-            double weight = model==VectorModel.TF_IDF ? calculateTfIdf(termFrequency,documentFrequency,collectionSize) : 1;
+            double weight = model==VectorModel.TF_IDF ? calculateTfIdf(termFrequency,documentFrequency,collectionSize) : collectionTermFrequency.get(token);
             queryNorm += weight*weight;
             //posting list for this term
             List<PostingItem> postingList = index.get(token);
@@ -264,7 +264,13 @@ public class InvertedIndex implements IIndex{
             double dotProduct = retrieved.get(relevantDocumentId);
             //cosine distance between query and document
             double relevance = dotProduct / (queryNorm * getDocumentLength(relevantDocumentId));
-            if(relevance > THRESH_HOLD)
+            //dont check relevance - bag of words relevance is always very low
+            // if we compare it with tf-idf thresh hold we will get 0 hits
+            if(model == VectorModel.BAG_OF_WORDS){
+                help.add(new Document(relevantDocumentId,relevance));
+                continue;
+            }
+            if( relevance > THRESH_HOLD)
                 help.add(new Document(relevantDocumentId,relevance));
         }
         Object[] docs = help.toArray();
@@ -284,8 +290,8 @@ public class InvertedIndex implements IIndex{
     }
     @Override
     public List<Integer> retrieveDocuments(String query,VectorModel vectorModel) {
-        //if(vectorModel == VectorModel.BINARY)
-        //    return booleanRetrieval(query);
+        if(vectorModel == VectorModel.BINARY)
+            return booleanRetrieval(query);
         List<Integer> articleIds = new ArrayList<>();
         List<String> tokens = getQueryToken(query);
         Object[] relevantDocumentsByTitle = retrieveDocumentsFromIndex(tokens,vectorModel,titleIndex);
@@ -306,7 +312,8 @@ public class InvertedIndex implements IIndex{
     }
 
     private List<Integer> mergeDocumentArrays(Object[] relevantDocumentsByTitle, Object[] relevantDocumentsByContent) {
-        Set<Integer> ids = new HashSet<>();
+        List<Integer> ids = new ArrayList<>();
+        Set<Integer> visited = new HashSet<>();
         int titlePointer = 0;
         int contentPointer = 0;
         while(true){
@@ -316,7 +323,8 @@ public class InvertedIndex implements IIndex{
             if(titlePointer == relevantDocumentsByTitle.length){
                 for(int i = contentPointer; i < relevantDocumentsByContent.length;i++){
                     Document d = (Document) relevantDocumentsByContent[i];
-                    ids.add(d.getId());
+                    if(!visited.contains(d.getId()))
+                        ids.add(d.getId());
                 }
                 break;
             }
@@ -324,24 +332,30 @@ public class InvertedIndex implements IIndex{
             if(contentPointer == relevantDocumentsByContent.length){
                 for(int i = titlePointer; i < relevantDocumentsByTitle.length;i++){
                     Document d = (Document) relevantDocumentsByTitle[i];
-                    ids.add(d.getId());
+                    if(!visited.contains(d.getId()))
+                        ids.add(d.getId());
                 }
                 break;
             }
             Document titleDocument = (Document)relevantDocumentsByTitle[titlePointer];
             Document contentDocument = (Document) relevantDocumentsByContent[contentPointer];
+            double titleRelevance = titleDocument.getRelevance();
+            double contentRelevance = contentDocument.getRelevance();
 
-            if(titleDocument.getRelevance()>contentDocument.getRelevance()){
+            if(titleRelevance>=contentRelevance){
                 ids.add(titleDocument.getId());
+                visited.add(titleDocument.getId());
                 titlePointer++;
                 continue;
             }
             ids.add(contentDocument.getId());
+            visited.add(contentDocument.getId());
+
             contentPointer++;
 
 
         }
-        return ids.stream().toList();
+        return ids;
     }
 
     @Override
@@ -378,16 +392,84 @@ public class InvertedIndex implements IIndex{
     }
 
     //boolean retrieval - only AND logical connection
-    //TODO IF TIME
     private  List<Integer> booleanRetrieval(String query){
-        /*List<String> tokens = getQueryToken(query);
-        String first = tokens.get(0);
+        List<String> tokens = getQueryToken(query);
         //get postings lists of all documents that contain the first word - all the rest is irrelevant
-        List<PostingItem> postingLists = this.contentIndex.get(first);
+        Object[] relevantByTitle = booleanRetrieval(tokens,titleIndex);
+        Object[] relevantByContent = null;
 
-        */
-        return null;
+        if(relevantByTitle.length < PAGE_SIZE){
+            relevantByContent = booleanRetrieval(tokens,contentIndex);
+            return mergeDocumentArrays(relevantByTitle,relevantByContent);
+        }
+        List<Integer> relevantDocuments = new ArrayList<>();
+        //also quite inefficient, could be done way better
+        for(int i = 0; i < relevantByTitle.length; i++)
+            relevantDocuments.add(((Document)relevantByTitle[i]).getId());
+        return relevantDocuments;
     }
+
+    private Object[] booleanRetrieval(List<String> tokens, Map<String,List<PostingItem>> index){
+        List<List<PostingItem>> relevantPostingLists = new ArrayList<>();
+        for(String token : tokens){
+            if(!index.containsKey(token))
+                continue;
+            relevantPostingLists.add(index.get(token));
+        }
+        Object[] relevantDocuments = setIntersection(relevantPostingLists);
+        return relevantDocuments;
+    }
+
+
+    private Object[] setIntersection(List<List<PostingItem>> relevantPostingItems){
+        List<Document> documents = new ArrayList<>();
+        //Sort by length - shortest posting list on index 1
+        relevantPostingItems.sort(new Comparator<List<PostingItem>>() {
+            @Override
+            public int compare(List<PostingItem> o1, List<PostingItem> o2) {
+                return Integer.compare(o1.size(), o2.size());
+            }
+        });
+        //sort the documents by id
+        for(List<PostingItem> tmp : relevantPostingItems)
+            tmp.sort(new Comparator<PostingItem>() {
+                @Override
+                public int compare(PostingItem o1, PostingItem o2) {
+                    return Integer.compare(o1.getArticleId(), o2.getArticleId());
+                }
+            });
+        //take the shortest list
+        List<PostingItem> shortestList = relevantPostingItems.get(0);
+        int walker = 0;
+        int len =shortestList.size();
+        while(walker != len){
+            int articleId = shortestList.get(walker).getArticleId();
+            boolean isInIntersection = true;
+            for(int i = 1; i < relevantPostingItems.size(); i++){
+                List<PostingItem> items = relevantPostingItems.get(i);
+                //redundant comparisons, can be done better with indexes instead of foreach
+                for(PostingItem item : items){
+                    int id = item.getArticleId();
+                    if(id < articleId)
+                        continue;
+                    if(id != articleId){
+                        isInIntersection = false;
+                        break;
+                    }
+                    break;
+                }
+                if(!isInIntersection)
+                    break;
+            }
+            walker++;
+            if(isInIntersection)
+                documents.add(new Document(articleId,1));
+        }
+        return documents.toArray();
+    }
+
+
+
 
     //preprocess query and remove duplicate terms
     private List<String> getQueryToken(String query){
